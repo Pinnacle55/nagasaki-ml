@@ -64,5 +64,5 @@ We can now start with some basic machine learning. Unsupervised machine learning
 
 I selected the following sub area because it exhibits several prominent classes across the data set including forested, marine, and urban areas.
 
-
+![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/82923b7ae834f8d45cba5a90199ad19692de575e/Images/Study%20Area.png?raw=true "Unsupervised Study Area")
 
