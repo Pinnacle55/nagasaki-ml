@@ -44,6 +44,22 @@ In addition, please note that while TOA reflectance is calculated for bands 1 th
 
 The first thing that should be done is to crop the stacked raster image to your study area. I accomplished this using the following GDAL CLI command: `gdalwarp -t_srs target_crs -te xmin ymin xmax ymax source_filepath destination_filepath`. This command crops the raster image into the stated extent as well as converts the CRS of the image to the target CRS. Remember that all files used in the project should use the same CRS. Future releases may consider integrating this step into TOA_reflectance_stacker.py. 
 
-The stacked image can now be used for a variety of visualizations, as well as for the calculation of several indices, such as NDVI. It should be noted however, that without additional processing, the resultant images are of extremely low contrast. TOA_reflectance_stacker.py contains a function called `histogram_stretch` That does a simple linear histogram stretch that generates much more visually informative images.
+The stacked image can now be used for a variety of visualizations, as well as for the calculation of several indices, such as NDVI. It should be noted however, that without additional processing, the resultant images are of extremely low contrast. TOA_reflectance_stacker.py contains a function called `histogram_stretch` That does a simple linear histogram stretch that allows you to plot the raster and generate much more visually informative images.
+
+![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/a77e70fd0860aabdc0d1b1427b4bfe8304e24d83/without_histogram_stretch.jpg?raw=true "Without stretching")
+
+![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/a77e70fd0860aabdc0d1b1427b4bfe8304e24d83/with_histogram_stretch.jpg?raw=true "With stretching")
+
+## Training Data
+
+At this point, we need to generate training data for our land use classifier. Ideally you should find land use data from local governments or elsewhere online. In cases where this data is absent, you can generate your own land use data. For example, I generated some training data in the form of a shapefile drawn in a GIS software (QGIS). I drew polygons around areas of “known” land use by reference to the LANDSAT images as well as Google Earth. In my case, I used a very basic classification scheme consisting of only four different types of land use: water, urban, forest, and cropland. 
+
+It is important to ensure that you identify areas of the same class but with relatively different spectral signatures. For example, deep water in the ocean and shallow water filled with sediment are both in the “water” class but have very different spectral signatures because of the way sediment interacts with the different LANDSAT bands. It is important to ensure that you create training data polygons that account for both of these possibilities to prevent misclassifications.
+
+Once you have finished with your classifications, save the shapefile as a GeoJSON. Remember to set the correct CRS when saving the shapefile.
+
+## Machine Learning: Unsupervised
+
+
 
 
