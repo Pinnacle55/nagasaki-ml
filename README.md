@@ -60,6 +60,9 @@ Once you have finished with your classifications, save the shapefile as a GeoJSO
 
 ## Machine Learning: Unsupervised
 
+We can now start with some basic machine learning. Unsupervised machine learning can be conducted without user-labeled data. The user needs only to select a small sub area of the study in which the model should be trained. This sub area should have clear examples of all of the different classes that you would like the model to identify. 
+
+I selected the following sub area because it exhibits several prominent classes across the data set including forested, marine, and urban areas.
 
 
 
