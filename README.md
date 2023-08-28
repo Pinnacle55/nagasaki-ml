@@ -36,8 +36,14 @@ It should be noted that, in LANDSAT Level 1 products, Bands 1 through 9 are repr
 
 TOA_Reflectance_Stacker.py can be run from the command line using the following syntax: `TOA_Reflectance_Stacker.py mtl_file`. I strongly recommend running this file using the OSGeo4W PowerShell as future releases may use GDAL CLI commands.
 
-Running this command creates a stack of raster data from LANDSAT bands 1 to 11. A notable exception is that band 8 is not included in the stack, since the panchromatic band does not contain any additional information that is not already present in bands 2 through 5. The primary advantage of the panchromatic band is that it has a much higher resolution than the rest of the bands. Since it does not provide additional information for land use classification and because the higher resolution means that its size is much larger than the other bands it was excluded from the band stack. 
+Running this command creates a stack of raster data from LANDSAT bands 1 to 11 with the name `LANDSATfilename_TOA_stacked.tif`. A notable exception is that band 8 is not included in the stack, since the panchromatic band does not contain any additional information that is not already present in bands 2 through 5. The primary advantage of the panchromatic band is that it has a much higher resolution than the rest of the bands. Since it does not provide additional information for land use classification and because the higher resolution means that its size is much larger than the other bands it was excluded from the band stack. 
 
-In addition, please note that while TOA reflectance is calculated for bands 1 through 9, and consequently has a value between 0 and 1, bands 11 and 12 contain emissivity data which does not have TOA reflectance equivalent. 
+In addition, please note that while TOA reflectance is calculated for bands 1 through 9, and consequently has a value between 0 and 1, bands 11 and 12 contain emissivity data which does not have TOA reflectance equivalent - these values thus still range between 1-65535. 
+
+## Data Preprocessing
+
+The first thing that should be done is to crop the stacked raster image to your study area. I accomplished this using the following GDAL CLI command: `gdalwarp -t_srs target_crs -te xmin ymin xmax ymax source_filepath destination_filepath`. This command crops the raster image into the stated extent as well as converts the CRS of the image to the target CRS. Remember that all files used in the project should use the same CRS. Future releases may consider integrating this step into TOA_reflectance_stacker.py. 
+
+The stacked image can now be used for a variety of visualizations, as well as for the calculation of several indices, such as NDVI. It should be noted however, that without additional processing, the resultant images are of extremely low contrast. TOA_reflectance_stacker.py contains a function called `histogram_stretch` That does a simple linear histogram stretch that generates much more visually informative images.
 
 
