@@ -34,11 +34,17 @@ Different combinations of LANDSAT bands can be used to highlight different spect
 
 It should be noted that, in LANDSAT Level 1 products, Bands 1 through 9 are represented in the form of quantized and calibrated Digital Numbers (DN) representing the multispectral image data ranging from 1–65536. These DN numbers should be converted to TOA reflectance, which is a physical quantity representing the ratio of incident to reflected radiation. The specific formulas used to calculate this TOA reflectance can be found [here]( https://www.usgs.gov/landsat-missions/using-usgs-landsat-level-1-data-product). Most importantly this conversion requires information from the MTL metadata text file packaged with each LANDSAT product.
 
-TOA_Reflectance_Stacker.py can be run from the command line using the following syntax: `TOA_Reflectance_Stacker.py mtl_file`. I strongly recommend running this file using the OSGeo4W PowerShell as future releases may use GDAL CLI commands.
-
-Running this command creates a stack of raster data from LANDSAT bands 1 to 11 with the name `LANDSATfilename_TOA_stacked.tif`. A notable exception is that band 8 is not included in the stack, since the panchromatic band does not contain any additional information that is not already present in bands 2 through 5. The primary advantage of the panchromatic band is that it has a much higher resolution than the rest of the bands. Since it does not provide additional information for land use classification and because the higher resolution means that its size is much larger than the other bands it was excluded from the band stack. 
+TOA_Reflectance_Stacker.py is a script that uses metadata from the LANDSAT MTL file to calculate the TOA of bands 1 through 9 and stacks them together with bands 11 and 12 into a 10-band multiband raster.A notable exception is that band 8 is not included in the stack, since the panchromatic band does not contain any additional information that is not already present in bands 2 through 5. The primary advantage of the panchromatic band is that it has a much higher resolution than the rest of the bands. Since it does not provide additional information for land use classification and because the higher resolution means that its size is much larger than the other bands it was excluded from the band stack. 
 
 In addition, please note that while TOA reflectance is calculated for bands 1 through 9, and consequently has a value between 0 and 1, bands 11 and 12 contain emissivity data which does not have TOA reflectance equivalent - these values thus still range between 1-65535. 
+
+The script has been set up such that you only need to provide the path to the MTL file and ensure that it is in the same folder as the rest of the LANDSAT bands. The output TOA multiband raster will be generated into the folder that the script is located in.
+
+In addition, the script has been updated to allow you to crop the multiband raster to a smaller study area using a shapefile. This shapefile can be in any file format that can be read by Geopandas, such as ESRI shapefiles and GeoJSONs. Note that the raster will be cropped to the maximum rectangular extent of the shapefile. Similarly the cropped raster will be output into the folder where the script is located. 
+
+One important thing to note is that this script makes use of the gdal command line; Another words your environment must have gdal installed. If you have an Anaconda distribution this is relatively easy by creating a new environment (`conda create --name env_name`) and running `conda install -c conda-forge gdal`.
+
+The script can be run from the command line using the following syntax: `TOA_Reflectance_Stacker.py mtl_file study_area_shapefile`. Note that adding the study area shape file is optional but highly recommended as the full multiband raster can be relatively large (~1 GB).
 
 ## Data Preprocessing
 
@@ -50,14 +56,6 @@ The stacked image can now be used for a variety of visualizations, as well as fo
 
 ![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/a77e70fd0860aabdc0d1b1427b4bfe8304e24d83/with_histogram_stretch.jpg?raw=true "With stretching")
 
-## Training Data
-
-At this point, we need to generate training data for our land use classifier. Ideally you should find land use data from local governments or elsewhere online. In cases where this data is absent, you can generate your own land use data. For example, I generated some training data in the form of a shapefile drawn in a GIS software (QGIS). I drew polygons around areas of “known” land use by reference to the LANDSAT images as well as Google Earth. In my case, I used a very basic classification scheme consisting of only four different types of land use: water, urban, forest, and cropland. 
-
-It is important to ensure that you identify areas of the same class but with relatively different spectral signatures. For example, deep water in the ocean and shallow water filled with sediment are both in the “water” class but have very different spectral signatures because of the way sediment interacts with the different LANDSAT bands. It is important to ensure that you create training data polygons that account for both of these possibilities to prevent misclassifications.
-
-Once you have finished with your classifications, save the shapefile as a GeoJSON. Remember to set the correct CRS when saving the shapefile.
-
 ## Machine Learning: Unsupervised
 
 We can now start with some basic machine learning. Unsupervised machine learning can be conducted without user-labeled data. The user needs only to select a small sub area of the study in which the model should be trained. This sub area should have clear examples of all of the different classes that you would like the model to identify. 
@@ -66,3 +64,10 @@ I selected the following sub area because it exhibits several prominent classes 
 
 ![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/82923b7ae834f8d45cba5a90199ad19692de575e/Images/Study%20Area.png?raw=true "Unsupervised Study Area")
 
+## Training Data
+
+At this point, we need to generate training data for our land use classifier. Ideally you should find land use data from local governments or elsewhere online. In cases where this data is absent, you can generate your own land use data. For example, I generated some training data in the form of a shapefile drawn in a GIS software (QGIS). I drew polygons around areas of “known” land use by reference to the LANDSAT images as well as Google Earth. In my case, I used a very basic classification scheme consisting of only four different types of land use: water, urban, forest, and cropland. 
+
+It is important to ensure that you identify areas of the same class but with relatively different spectral signatures. For example, deep water in the ocean and shallow water filled with sediment are both in the “water” class but have very different spectral signatures because of the way sediment interacts with the different LANDSAT bands. It is important to ensure that you create training data polygons that account for both of these possibilities to prevent misclassifications.
+
+Once you have finished with your classifications, save the shapefile as a GeoJSON. Remember to set the correct CRS when saving the shapefile.
