@@ -78,7 +78,7 @@ def toa_reflectance(raster, band_num, metadata):
     toa_ref_no_suncorr = raster * float(metadata["LEVEL1_RADIOMETRIC_RESCALING"][f"REFLECTANCE_MULT_BAND_{band_num}"]) + float(metadata["LEVEL1_RADIOMETRIC_RESCALING"][f"REFLECTANCE_ADD_BAND_{band_num}"])
     
     # Correct for sun elevation
-    toa_ref = toa_ref_no_suncorr / np.sin(float(metadata["IMAGE_ATTRIBUTES"]["SUN_ELEVATION"]))
+    toa_ref = toa_ref_no_suncorr / np.sin(np.deg2rad(float(metadata["IMAGE_ATTRIBUTES"]["SUN_ELEVATION"])))
     
     # Clip any values that are larger than 1 to 1
     toa_ref[toa_ref > 1] = 1
