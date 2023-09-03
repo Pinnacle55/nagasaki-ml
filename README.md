@@ -72,7 +72,7 @@ We use a simple elbow method to determine the number of classes in the dataset. 
 
 Based on the elbow method, we see that instantiating a clustering algorithm with three or five classes would be ideal for this dataset. I instantiated a kmeans model with five clusters and trained it on the study area, leading to the following:
 
-![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/528f4246749a4c0dfe30471e6ce9563c3a7d30b5/Images/Unsupervised%20KMeans%20Model%20-%2020230903.png?raw=true "Unsupervised Learning")
+![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/528f4246749a4c0dfe30471e6ce9563c3a7d30b5/Images/Unsupervised%20KMeans%20Model%20-%2020230903.png) "Unsupervised Learning")
 
 The model has actually done quite well for itself, being able to clearly identify water regardless of sediment content. It has also been able to identify urban areas as well as cropland areas. It is also seemingly been able to do to identify two different types of forested areas - however, these differences are likely just to do with differences in terrain relief and aspect rather than any form of land use.
 
