@@ -64,6 +64,14 @@ I selected the following sub area because it exhibits several prominent classes 
 
 ![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/82923b7ae834f8d45cba5a90199ad19692de575e/Images/Study%20Area.png?raw=true "Unsupervised Study Area")
 
+The first thing we need to do when conducting unsupervised learning is to decide how many classes there are in the dataset. This is a classic problem of unsupervised machine learning: additional classes will reduce the number of misclassifications, but we'll take additional resources and will have a higher chance of overfitting.
+
+We use a simple elbow method to determine the number of classes in the dataset. The elbow method plots the error or distortion against the number of clusters that are predicted. A kink in the graph indicates a break point at which additional classes have a diminishing effect on the accuracy of the model.
+
+![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/32e362ca2b1c60a27f86cc135f36a859dff8e749/Images/Elbow%20Method.png?raw=true "Elbow Method")
+
+
+
 ## Training Data
 
 At this point, we need to generate training data for our land use classifier. Ideally you should find land use data from local governments or elsewhere online. In cases where this data is absent, you can generate your own land use data. For example, I generated some training data in the form of a shapefile drawn in a GIS software (QGIS). I drew polygons around areas of “known” land use by reference to the LANDSAT images as well as Google Earth. In my case, I used a very basic classification scheme consisting of only four different types of land use: water, urban, forest, and cropland. 
