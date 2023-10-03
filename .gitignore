@@ -6,3 +6,6 @@ __pycache__/*
 
 # don't track any data folders
 data/*
+
+# don't track QGIS files
+*.qmd
