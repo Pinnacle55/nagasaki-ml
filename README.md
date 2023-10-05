@@ -106,12 +106,30 @@ Specifically, there are some clear issues with the identification of sediment-la
 
 One way of attempting to ameliorate this issue is to select a study area that contains all of the possible different land use types that can be found in the scene. Although we selected a very good training area, it did not contain any water bodies with a significant amount of sediment; we'll need to pick an area that contains this information. We can then train our unsupervised model on this new study area - in addition, we will increase the number of clusters to six in order to attempt to account for the sediment-laden water.
 
+![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/3e83002d746c689f8f1f5bec8e4d8e8b826f9d6b/Images/unsupervised_6cluster_training.png)
 
+When we extend this model to the rest of the scene, we find that the model now correctly predicts the presence of sediment laden water in the appropriate areas.
 
-## Training Data
+![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/3e83002d746c689f8f1f5bec8e4d8e8b826f9d6b/Images/unsupervised_beststudyarea_6cluster.png)
 
-At this point, we need to generate training data for our land use classifier. Ideally you should find land use data from local governments or elsewhere online. In cases where this data is absent, you can generate your own land use data. For example, I generated some training data in the form of a shapefile drawn in a GIS software (QGIS). I drew polygons around areas of “known” land use by reference to the LANDSAT images as well as Google Earth. In my case, I used a very basic classification scheme consisting of only four different types of land use: water, urban, forest, and cropland. 
+### Additional Tweaks
+
+Another way of addressing the issue is to crop areas of the image that are not useful for the analysis that we are trying to conduct. For example, if we are only interested in land use, we may wish to crop the image such that only the land areas are being analysed (i.e., we can remove all water bodies from the training set). We can do this by cropping the image to our administrative boundary dataset. The image below shows an unsupervised learning model with three clusters trained on only the areas within the municipal boundaries of Nagasaki.
+
+![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/3e83002d746c689f8f1f5bec8e4d8e8b826f9d6b/Images/cropped_unsupervised_3cluster.png)
+
+Of course, we can extend this workflow to a four-cluster unsupervised learning model and attempt to extend the model to other scenes in the data set in order to get a time series visualisation of the study area during the year 2021.
+
+![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/3e83002d746c689f8f1f5bec8e4d8e8b826f9d6b/Images/unsupervised_landuse_seasonal.gif)
+
+We can see that the unsupervised learning model has worked quite well. In particular, this visualisation has very clearly shown how the cropland changes with the seasons: specifically, you can see how the cropland changes from being classified as urban/cropland during winter to being classified as forest_1 in the summer. Machine learning models tend to struggle with the classification of cropland, especially in time series data, because the spectral signature of cropland changes dramatically over the course of a year.
+
+## Training Data for Supervised Learning
+
+At this point, we need to generate training data for our land use classifier. Ideally you should find land use data from local governments or elsewhere online. In cases where this data is absent, you can generate your own land use data. For example, I generated some training data in the form of a shapefile drawn in a GIS software (QGIS). I drew polygons around areas of “known” land use by reference to the LANDSAT images as well as Google Earth. In my case, I used a very basic classification scheme consisting of only four different types of land use: water, urban, forest, cropland, and bare land. Naturally, you can create as many classifications as you would like.
 
 It is important to ensure that you identify areas of the same class but with relatively different spectral signatures. For example, deep water in the ocean and shallow water filled with sediment are both in the “water” class but have very different spectral signatures because of the way sediment interacts with the different LANDSAT bands. It is important to ensure that you create training data polygons that account for both of these possibilities to prevent misclassifications.
 
 Once you have finished with your classifications, save the shapefile as a GeoJSON. Remember to set the correct CRS when saving the shapefile.
+
+
