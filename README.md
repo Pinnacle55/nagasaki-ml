@@ -6,10 +6,6 @@ This workflow includes generating top-of-atmosphere (TOA) reflectance data from 
 
 The workflow used here can be applied to any collection of data downloaded from the USGS Earth Explorer website. 
 
-To do:
- - Add code to TOA_reflectance_stacker.py to crop the output raster into the study area based on a shapefile.
- - Add animations and summary statistics to show land use change over time.
-
 ## Data Collection
 
 LANDSAT data was downloaded from the [USGS earth explorer website](https://earthexplorer.usgs.gov/). In addition to LANDSAT data, this database contains a variety of satellite information such as MODIS land use data. Note that LANDSAT files are quite large. The LANDSAT products provided include 11 bands across the electromagnetic spectrum. Bands 1–7 contain reflectance information, while band 8 is a panchromatic image that takes information from bands 2 to 5. Band 9 contains cirrus data usually used for quality control, while bands 10 and 11 contain thermal emissivity data. 
@@ -28,7 +24,7 @@ LANDSAT data was downloaded from the [USGS earth explorer website](https://earth
 | Band 10 - Thermal Infrared (TIRS) 1  | 10.6-11.19                  | 100                    |
 | Band 11 - Thermal Infrared (TIRS) 2  | 11.50-12.51                 | 100                    |
 
-Different combinations of LANDSAT bands can be used to highlight different spectral signatures, which can, in turn, be used to identify specific properties or characteristics about a field of view. A discussion of the possible combinations of LANDSAT bands is out of the scope of this Readme.
+Different combinations of LANDSAT bands can be used to highlight different spectral signatures, which can, in turn, be used to identify specific properties or characteristics about a field of view. A discussion of the possible combinations of LANDSAT bands is out of the scope of this Readme, but can be easily found online.
 
 ## Calculating TOA Reflectance
 
@@ -56,6 +52,32 @@ The stacked image can now be used for a variety of visualizations, as well as fo
 
 ![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/a77e70fd0860aabdc0d1b1427b4bfe8304e24d83/with_histogram_stretch.jpg?raw=true "With stretching")
 
+NEW: I have recently developed a piece of code named `landsat_processing_utils.py` which contains a set of functions that are commonly used in the preprocessing of landsat data. It utilises a variety of geospatial Python libraries including rasterio, geopandas, earthpy, and shapely. In particular, it is capable of combining the TOA reflectance calculation, cropping, and stacking into a single command.
+
+The functions available on the command line are shown here:
+```
+On Command Line
+>>> python landsat_processing_utils.py --help
+usage: landsat_processing_utils.py [-h] [-m MASK] [-s] [-c] [-o OUTDIR] [-d] filepath
+
+Calculates TOA reflectance for Level 1 Landsat products. Additional flags can be set to crop, stack, and ignore sun
+elevation correction.
+
+positional arguments:
+  filepath              Path to folder containing all Landsat bands and MTL file.
+
+options:
+  -h, --help            show this help message and exit
+  -m MASK, --mask MASK  Provide a shapefile that the images will be cropped to
+  -s, --stack           Create a stacked raster of the images - default False
+  -c, --sun_corr        add this flag if you DON'T want to do a sun elevation correction - default True
+  -o OUTDIR, --outdir OUTDIR
+                        Specify an output folder to save TOA corrected images
+  -d, --cleanup         If cropping, choose whether to delete the uncropped TOA images - default False
+```
+
+Additional functionality included within the module itself includes the parsing of level 2 product QA bands for cloud detection and the manipulation of raster data in preparation for machine learning.
+
 ## Machine Learning: Unsupervised
 
 We can now start with some basic machine learning. Unsupervised machine learning can be conducted without user-labeled data. The user needs only to select a small sub area of the study in which the model should be trained. This sub area should have clear examples of all of the different classes that you would like the model to identify. 
@@ -72,9 +94,19 @@ We use a simple elbow method to determine the number of classes in the dataset. 
 
 Based on the elbow method, we see that instantiating a clustering algorithm with three or five classes would be ideal for this dataset. I instantiated a kmeans model with five clusters and trained it on the study area, leading to the following:
 
-![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/528f4246749a4c0dfe30471e6ce9563c3a7d30b5/Images/Unsupervised%20KMeans%20Model%20-%2020230903.png) "Unsupervised Learning")
+![alt text](https://github.com/Pinnacle55/nagasaki-ml/blob/528f4246749a4c0dfe30471e6ce9563c3a7d30b5/Images/Unsupervised%20KMeans%20Model%20-%2020230903.png?raw=True "Unsupervised Learning")
 
 The model has actually done quite well for itself, being able to clearly identify water regardless of sediment content. It has also been able to identify urban areas as well as cropland areas. It is also seemingly been able to do to identify two different types of forested areas - however, these differences are likely just to do with differences in terrain relief and aspect rather than any form of land use.
+
+However, there are some clear issues when attempting to extend our model to the rest of the scene. 
+
+![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/f1e7f71844ae8fd74703aa3701c8e85cdfcc7db7/Images/unsupervised_5cluster.png)
+
+Specifically, there are some clear issues with the identification of sediment-laden water - this can be mostly seen in the northeast section of the scene, where water that has a high sediment content has been misclassified as forest. In addition, there is a cove near the middle of the scene that has been misclassified as an urban area.
+
+One way of attempting to ameliorate this issue is to select a study area that contains all of the possible different land use types that can be found in the scene. Although we selected a very good training area, it did not contain any water bodies with a significant amount of sediment; we'll need to pick an area that contains this information. We can then train our unsupervised model on this new study area - in addition, we will increase the number of clusters to six in order to attempt to account for the sediment-laden water.
+
+
 
 ## Training Data
 
