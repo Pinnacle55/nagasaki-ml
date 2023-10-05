@@ -216,3 +216,5 @@ y_pred = random_svc_search.predict(X_test)
 ![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/2eaa2f83463becdd7389bf3da544efed96777b05/Images/supervised_linearsvc_studyarea.png)
 
 A cursory analysis shows that this is by far the best performing model that we have. There are no issues with sediment-laden water or with the over-prediction of bare land.
+
+One major issue is that this model is not particularly well-suited for the analysis of time series data: in addition to the issues about the identification of cropland versus bare land versus urban areas, the differences between the atmospheric conditions can have a significant effect on the spectral signatures in each scene, which cause issues for supervised machine learning. In a large majority of cases, if you wish to conduct machine learning over time series data the use of deep learning (specifically, recurrent neural networks) is recommended.
