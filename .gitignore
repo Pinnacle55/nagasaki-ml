@@ -1,5 +1,6 @@
 # Don't track .tif files or anything in the LANDSAT folders
 .tif
+*/*.tif
 LC08*/*
 .ipynb_checkpoints*
 __pycache__/*
