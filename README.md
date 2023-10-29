@@ -130,6 +130,91 @@ At this point, we need to generate training data for our land use classifier. Id
 
 It is important to ensure that you identify areas of the same class but with relatively different spectral signatures. For example, deep water in the ocean and shallow water filled with sediment are both in the “water” class but have very different spectral signatures because of the way sediment interacts with the different LANDSAT bands. It is important to ensure that you create training data polygons that account for both of these possibilities to prevent misclassifications.
 
-Once you have finished with your classifications, save the shapefile as a GeoJSON. Remember to set the correct CRS when saving the shapefile.
+Once you have finished with your classifications, save the shapefile as a GeoJSON. Remember to set the correct CRS when saving the shapefile. The image below shows the location of my training polygons in comparison to the rest of the image.
 
+![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/2eaa2f83463becdd7389bf3da544efed96777b05/Images/training_polygons.png)
 
+The next step is to prepare the training data in an appropriate format. This is actually more tricky than it looks because you need to use rasterio’s mask function in order to select only the rest of data that is covered by the training polygons. Notably, the `rio.mask.mask()` function only takes in a raster file in ‘read’ mode – it cannot be used for loaded rasters. 
+
+### Cross-Validation and Pipelines
+
+At this point, we can start using some more advanced machine learning techniques to improve the results of our algorithms. In particular, because we have ground truth data that we can compare our predictions to, we can start using cross-validation and accuracy metrics in order to assess the effectiveness of our machine learning models.
+
+Cross validation refers to the act of splitting the training data into parts, training the model on one of those parts and validating the model against the other parts. This allows us to get a good idea of whether the model works well across the training data. It is also important to select an appropriate accuracy metric by which to assess our model: in most cases, the accuracy metric is not particularly useful - we may want to use more specific metrics for our use cases such as F1 scores or log loss. Your choice of metrics will depend on the kind of error that you are trying to minimise.
+
+In addition, we can use some of the workflow aids that are available in scikit-learn, such as pipelines. Pipelines allow you to run a set of data through standardised workflow so that you do not need to call multiple types of functions each time you want to train and test a set of data. Although each pipeline can only use one estimator, you can call as many preprocessing functions as you wish, such as principal component analysis (PCA) and/or scaling.
+
+An example of how you can set up an Naive-Bayes estimator that scales the data and cross validates the model is shown below.
+
+```
+from sklearn.preprocessing import StandardScaler
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import make_pipeline
+
+gnb_clf = make_pipeline(StandardScaler(), GaussianNB())
+
+# 5 fold cross-validation
+cross_val_score(gnb_clf, X_train, y_train, cv = 5, scoring='f1_macro')
+
+>>> array([0.72360339, 0.89682849, 0.80111729, 0.53799032, 0.75659121])
+```
+
+![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/2eaa2f83463becdd7389bf3da544efed96777b05/Images/supervised_GNB.png)
+
+![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/2eaa2f83463becdd7389bf3da544efed96777b05/Images/supervised_GNB_studyarea.png)
+
+The Naïve-Bayes model has done a relatively good job with the classification of land use across the study area. There were no issues with sediment-laden water like we saw in the unsupervised learning model, and even in the case of deltas they were correctly identified as bare land. However, there are still some clear issues that can be observed: for example, the model clearly overestimates the amount of bare land in the scene - this is particularly clear in the smaller study area, where a significant amount of the urban area has been misclassified as bare land.
+
+### Hyperparameter Tuning
+
+You can, of course, experiment with different types of models. In addition, you can attempt to use hyperparameter tuning to improve the predictive power of the model. Naïve-Bayes model don’t have any meaningful parameters can be tuned, so let’s use a LinearSVC model for our next attempt (note: we use a LinearSVC model because `SVC()` models cannot be effectively extended to extremely large datasets. Since we are dealing with image data with millions of pixels, we use a `LinearSVC()` model for greater efficiency.)
+
+Hyper parameter tuning refers to tuning several parameters of the machine learning model in order to identify the model that has the best performance. This can be done using a variety of techniques: in `sklearn`, this can be done with GridSearchCV, which allows you to specify a dictionary of hyperparameters which the function will then test to identify the best performing model. The code snippet below shows the set-up of a hyperparameter tuning workflow.
+
+```
+from sklearn.model_selection import RandomizedSearchCV
+
+# dictionary or list of dictionaries showing the hyperparameters to be tuned
+# need to use the clf__ prefix to distinguish between multiple parts of the pipeline
+# for example, if you are using PCA parameters or TDIFD vectorizers
+parameter_grid = [
+    {
+        'linearsvc__penalty': ['l1'], 
+        'linearsvc__C': [1, 10, 100, 1000]
+    },
+    {
+        'linearsvc__penalty': ['l2'],
+        'linearsvc__C': [1, 10, 100, 1000], 
+        'linearsvc__loss': ['hinge', 'squared_hinge']
+    }
+]
+
+# This does a random cross-validated search of the parameter grid
+# if you don't specify cv, automatically uses cv = 5
+# should actually use GridSearchCV for an exhaustive search of the grid
+random_svc_search = RandomizedSearchCV(
+    estimator=svc_pipeline,
+    param_distributions=parameter_grid,
+    n_iter=40,
+    random_state=0,
+    n_jobs=2,
+    verbose=1,
+    scoring = ('accuracy', 'f1_macro'), # list of scorers that the cv search should be scored by
+    refit = 'f1_macro'                  # if using multiple scorers, refit sets which scorer should be used for best_params
+)
+```
+
+Once the search has been completed, you can read in the results of the search into a pandas DataFrame in order to inspect the results of the search (`pd.DataFrame.from_dict(random_svc_search.cv_results_, orient = "columns")`). If you just want to identify the best model then `random_cv_search.best_estimator_` will give you the details of the best performing model as identified in the search. You can run the predict function directly on the RandomSearchCV object as shown below:
+
+```
+y_pred = random_svc_search.predict(X_test) 
+```
+
+![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/2eaa2f83463becdd7389bf3da544efed96777b05/Images/supervised_linearsvc.png)
+
+![alt_text](https://github.com/Pinnacle55/nagasaki-ml/blob/2eaa2f83463becdd7389bf3da544efed96777b05/Images/supervised_linearsvc_studyarea.png)
+
+A cursory analysis shows that this is by far the best performing model that we have. There are no issues with sediment-laden water or with the over-prediction of bare land.
+
+One major issue is that this model is not particularly well-suited for the analysis of time series data: in addition to the issues about the identification of cropland versus bare land versus urban areas, the differences between the atmospheric conditions can have a significant effect on the spectral signatures in each scene, which cause issues for supervised machine learning. In a large majority of cases, if you wish to conduct machine learning over time series data the use of deep learning (specifically, recurrent neural networks) is recommended.
